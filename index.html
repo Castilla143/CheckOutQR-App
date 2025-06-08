@@ -1,0 +1,646 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChekOutQR</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredericka+the+Great&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            background-color: rgb(191, 255, 233);
+            font-family: sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        .fondo-rectangulo {
+            background-color: #6ad4d4; 
+            padding: 30px 20px; 
+            text-align: center;
+            display: flex;       
+            align-items: center;      
+            gap: 20px; 
+        }
+        .titulo-grande {
+            font-size: 150px;
+            font-weight: bold;
+            text-align: center;
+            font-family: 'Fredericka the Great', cursive; /* Asegura que la fuente se aplique aquí */
+            color: #333;
+        }
+        .logo {
+            width: 250px;
+            height: 250px;
+            object-fit: contain;      
+        }
+        hr {
+            border: none;
+            border-top: 2px solid #6ad4d4;
+            margin: 20px 0;
+        }
+        nav ul {
+            list-style: none;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            background-color: #5aa7a7;
+            margin: 0;
+        }
+        nav ul li a {
+            display: block;
+            padding: 15px 25px;
+            text-decoration: none;
+            color: white;
+            font-weight: bold;
+        }
+        nav ul li a:hover {
+            background-color: #4a8a8a;
+        }
+        h1, h4 {
+            text-align: center;
+            color: #333;
+        }
+        #qr-reader {
+            width: 500px;
+            max-width: 90%; /* Hace que el lector QR sea más responsivo */
+            margin: 20px auto; /* Centra el lector QR */
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        #qr-result {
+            text-align: center;
+            margin-top: 10px;
+            font-weight: bold;
+            color: #007BFF;
+        }
+        form {
+            max-width: 500px;
+            margin: 30px auto;
+            padding: 25px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #fff;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        form h3 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        select, input[type="text"], button {
+            width: calc(100% - 22px); /* Ajuste para padding */
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box; /* Incluye padding y border en el ancho */
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #cajaTexto {
+            display: none; /* Oculto por defecto */
+        }
+
+        /* Estilos para la alerta modal */
+        .modal {
+            display: none; /* Oculto por defecto */
+            position: fixed; /* Posición fija */
+            z-index: 1; /* Se sitúa por encima de todo */
+            left: 0;
+            top: 0;
+            width: 100%; /* Ancho completo */
+            height: 100%; /* Alto completo */
+            overflow: auto; /* Habilitar scroll si es necesario */
+            background-color: rgba(0,0,0,0.4); /* Fondo semi-transparente */
+            padding-top: 60px;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto; /* 5% desde el top, centrado horizontalmente */
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%; /* Ancho del contenido */
+            max-width: 400px;
+            border-radius: 8px;
+            text-align: center;
+            position: relative;
+        }
+        .cerrar {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            position: absolute;
+            top: 10px;
+            right: 15px;
+        }
+        .cerrar:hover,
+        .cerrar:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        footer {
+            background-color: rgb(77, 193, 228);   /* Fondo */
+            color: rgb(23, 0, 85);    /* Texto */   
+            padding: 15px 20px;       
+            text-align: center;       
+            margin-top: 40px;
+        }
+    </style>
+</head> 
+<body> 
+    <div class="fondo-rectangulo">
+        <img class="logo" alt="Logo CheckOutQR" src="img/ChekOutQR_2.2.png"> <div class="titulo-grande">CheckOutQR</div>
+    </div>
+    <hr> 
+    <nav>
+        <ul>
+            <li><a href="information.html">Información</a></li>
+            <li><a href="soporte.html">Soporte</a></li>
+        </ul>
+    </nav>
+    
+    <div id="qr-result"></div>
+    <h1>Formulario de salida/entrada</h1>
+    <h4>Por favor, escanee el código QR</h4>
+    <div style="display: flex; justify-content: center;"> <div id="qr-reader"></div>
+    </div>
+
+    <form id="formSalida"> 
+        <h3>Motivo de salida</h3>
+        <select id="motivoSalida" onchange="mostrarOtraCaja()" required>
+            <option value="">Selecciona una opción</option>
+            <option value="baño">Baño</option>
+            <option value="visitaprofe">Visita a profesor</option>
+            <option value="visitauxi">Visita a auxiliar</option>
+            <option value="ftocop">Fotocopiadora</option>
+            <option value="otro">Otro (Especificar)</option>
+        </select>
+
+        <div id="cajaTexto">
+            <input type="text" id="otroMotivo" placeholder="Especifica el motivo...">
+        </div>
+        <br><br>
+        <button type="submit">Registrar</button>
+    </form>
+
+    <div id="miAlerta" class="modal">
+        <div class="modal-content">
+            <span id="cerrarAlerta" class="cerrar">&times;</span>
+            <p id="textoAlerta"></p>
+        </div>
+    </div>
+
+    <footer style="margin-top: 40px;">
+        Emily Castilla &copy; 2025
+    </footer>
+
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script> 
+        // Esta variable global almacenará el último QR escaneado
+        let ultimoQR = null;
+
+        function domReady(fn) {
+            if (document.readyState === "complete" || document.readyState === "interactive") {
+                setTimeout(fn, 1);
+            } else {
+                document.addEventListener("DOMContentLoaded", fn);
+            }
+        }
+
+        domReady(function() {
+            var myqr = document.getElementById('qr-result');
+            var lastResult, countResults = 0;
+
+            function onScanSucces(decodeText, decodeResult) {
+                if (decodeText !== lastResult) {
+                    ++countResults;
+                    lastResult = decodeText;
+                    ultimoQR = decodeText; // ¡Aquí guardamos el valor del QR!
+
+                    mostrarAlerta(`QR escaneado exitosamente. ID: ${decodeText}.`);
+                    myqr.innerHTML = `QR escaneado (${countResults}): ${decodeText}`;
+                }
+            }
+
+            var htmlscanner = new Html5QrcodeScanner(
+                "qr-reader", { fps: 10, qrbox: 250 }
+            );
+            htmlscanner.render(onScanSucces);
+
+            // Ocultar la caja de texto "Otro" por defecto al cargar
+            document.getElementById("cajaTexto").style.display = "none";
+        });
+
+        // --- Funciones para el formulario y el envío de datos ---
+
+        function mostrarOtraCaja() {
+            const select = document.getElementById("motivoSalida");
+            const caja = document.getElementById("cajaTexto");
+            // Definimos la variable aqui para que sea accesible
+            const otroMotivoInput = document.getElementById("otroMotivo"); 
+
+            if (select.value === "otro") {
+                caja.style.display = "block";
+                otroMotivoInput.setAttribute('required', 'required'); // Hacer requerido el campo
+            } else {
+                caja.style.display = "none";
+                otroMotivoInput.removeAttribute('required'); // Remover requerido
+                otroMotivoInput.value = ''; // Limpiar el valor si no es "otro"
+            }
+        }
+
+        // ¡IMPORTANTE! REEMPLAZA ESTA URL CON LA TUYA GENERADA POR APPS SCRIPT
+        // Esta URL ya estaba en tu código, la mantengo aquí para que la confirmes.
+        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzMhAzgf41n2q2KNVxvUPzyN1080ZvnOhll4uLyMyxdVrm75m8Y8xyMF86o76m7tC8v/exec'; 
+
+        document.getElementById('formSalida').addEventListener('submit', async function(event) {
+            event.preventDefault(); // Evita el envío tradicional del formulario
+
+            if (!ultimoQR) {
+                mostrarAlerta("Por favor, escanee el código QR antes de enviar el formulario.");
+                return; // Detiene el proceso si no hay QR
+            }
+
+            const motivoSeleccionado = document.getElementById("motivoSalida").value;
+            const otroMotivoTexto = document.getElementById("otroMotivo").value.trim();
+
+            let motivoFinalParaEnvio = '';
+            
+            // Validaciones de motivo antes de enviar (solo para salida o si se pide motivo)
+            if (motivoSeleccionado === "otro") {
+                if (otroMotivoTexto === "") {
+                    mostrarAlerta("Por favor, especifique el motivo.");
+                    return;
+                }
+                motivoFinalParaEnvio = otroMotivoTexto;
+            } else if (motivoSeleccionado) {
+                 motivoFinalParaEnvio = motivoSeleccionado;
+            } else {
+                // Si no se selecciona nada y no es "otro", o para el caso de entrada, se usa un valor predeterminado
+                motivoFinalParaEnvio = 'Motivo no especificado / Entrada'; 
+            }
+
+            // Prepara los datos a enviar a Google Apps Script
+            const dataToSend = {
+                idQR: ultimoQR, // El ID escaneado
+                motivoFinal: motivoFinalParaEnvio // El motivo (Apps Script lo usará o ignorará según el caso)
+            };
+
+            try {
+                // Realiza la solicitud POST a tu script de Google Apps Script
+                const response = await fetch(WEB_APP_URL, {
+                    method: 'POST',
+                    mode: 'cors', // Necesario para leer la respuesta JSON del script
+                    cache: 'no-cache',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(dataToSend) // Convierte los datos a JSON
+                });
+
+                const result = await response.json(); // Lee la respuesta JSON del Apps Script
+
+                if (result.status === "Éxito") {
+                    mostrarAlerta(result.message); // Muestra el mensaje detallado de Apps Script
+                } else {
+                    mostrarAlerta("Error: " + (result.message || result.error));
+                    console.error("Error de Apps Script:", result);
+                }
+                
+                // Limpia el formulario y el QR después del envío exitoso o con error
+                document.getElementById('formSalida').reset();
+                document.getElementById("cajaTexto").style.display = "none"; // Oculta la caja de "otro motivo"
+                document.getElementById("otroMotivo").removeAttribute('required'); // Remover requerido
+                ultimoQR = null; // Reinicia el QR escaneado para el siguiente registro
+                document.getElementById('qr-result').innerHTML = ''; // Limpia el display del QR
+                
+            } catch (error) {
+                console.error('Error al registrar la salida/entrada:', error);
+                // Este mensaje se mostrará si hay un problema de red, CORS o el JSON no es válido
+                mostrarAlerta('Hubo un error de conexión al registrar. Por favor, inténtelo de nuevo.');
+            }
+        });
+        
+        // --- Funciones para la alerta modal ---
+        function mostrarAlerta(mensaje) {
+            const modal = document.getElementById("miAlerta");
+            const texto = document.getElementById("textoAlerta");
+            texto.textContent = mensaje;
+            modal.style.display = "block";
+        }
+
+        document.getElementById("cerrarAlerta").onclick = function() {
+            document.getElementById("miAlerta").style.display = "none";
+        }
+
+        window.onclick = function(event) {
+            const modal = document.getElementById("miAlerta");
+            if (event.target === modal) {
+                modal.style.display = "none";
+            }
+        }
+    </script>
+
+</body>
+</html>
+
+
+<!--<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8"/> 
+        <title> ChekOutQR </title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredericka+the+Great&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head> 
+    
+    <body style=" background-color: rgb(191, 255, 233);"> 
+         
+        
+
+       <style>
+       .fondo-rectangulo {
+    background-color: #6ad4d4; 
+    padding: 30px 20px; 
+    text-align: center;
+     display: flex;           
+    align-items: center;      
+    gap: 20px; 
+        }
+  .titulo-grande {
+    font-size: 150px;
+    font-weight: bold;
+    text-align: center;
+  }
+
+  .logo {
+    width: 250px;
+    height: 250px;
+    object-fit: contain;     
+  }
+
+
+</style>
+    <div class="fondo-rectangulo">
+        <img class="logo" alt="Logo CheckOutQR" src="img/ChekOutQR_2.2.png">
+        <div class="titulo-grande">CheckOutQR</div>
+    </div>
+        <hr> 
+     <nav>
+      <ul>
+         <li><a href="information.html">
+           Informacion</a>
+          </li>
+          <li><a href="soporte.html">
+           Soporte</a>
+          </li>
+      </ul>
+  </nav>
+     
+        <div id="qr-result"></div>
+     <h1>Formulario de salida</h1>
+     <h4>Por favor escanee el codigo QR</h4>
+     <div style="display: flex; justify-content: left;">
+        <div id="qr-reader" style="width: 500px;"> 
+        </div>
+        <script src="https://unpkg.com/html5-qrcode"> </script>
+        <script> 
+        let ultimoQR = null;
+
+            function domReady(fn){
+                if (document.readyState ==="complete" || document.readyState ==="interactive"){
+                    setTimeout(fn,1)
+                }else{
+                    document.addEventListener("DOMContentLoaded",fn)
+                }
+            }
+            domReady (function(){
+                var myqr = document.getElementById('qr-result')
+                var lastResult,countResults = 0; 
+
+                function onScanSucces(decodeText,decodeResult){
+                    if(decodeText !== lastResult){
+                        ++countResults;
+                        lastResult = decodeText;
+                        ultimoQR = decodeText;  
+                        
+                        mostrarAlerta("QR escaneado exitosamente, por favor elija un motivo: " + decodeText,decodeResult)
+
+                        myqr.innerHTML = `you scan ${countResult}: ${decodeText}`
+
+                    }
+                }
+                var htmlscanner = new Html5QrcodeScanner(
+                    "qr-reader" ,{fps:10, qrbox:250}
+                )
+                    htmlscanner.render(onScanSucces)
+
+            })  
+        </script>
+    
+    </div>
+
+    
+
+     <form id="formSalida" onsubmit="return validarEnvio()">
+        <h3>Motivo de salida</h3>
+       <select id="motivoSalida" onchange="mostrarOtraCaja()">
+        <option value=""> Selecciona una opción</option>
+        <option value="baño"> Baño </option>
+        <option value="visitaprofe"> Visita a profesor </option>
+        <option value="visitauxi"> Visita a auxiliar </option>
+        <option value="ftocop"> Fotocopiadora </option>
+        <option value="otro"> Otro (Especificar) </option>
+       </select>
+
+        <div id="cajaTexto">
+    <input type="text" id="otroMotivo" placeholder="Especifica el motivo...">
+  </div>
+ <br><br>
+        <button type="submit">Enviar</button>
+    </form>
+
+
+  <script>
+    function mostrarOtraCaja() {
+      const select = document.getElementById("motivoSalida");
+      const caja = document.getElementById("cajaTexto");
+
+      if (select.value === "otro") {
+        caja.style.display = "block";
+        otroMotivoInput.setAttribute('required', 'required'); 
+      } else {
+        caja.style.display = "none";
+        otroMotivoInput.removeAttribute('required'); 
+                otroMotivoInput.value = '';
+      }
+    }
+
+      function validarEnvio() {
+         if (!ultimoQR) {
+        mostrarAlerta("Por favor escanee el código QR antes de enviar el formulario.");
+        return false;}
+          const motivo = document.getElementById("motivoSalida").value;
+          const otro = document.getElementById("otroMotivo").value.trim();
+
+          
+
+          if (!motivo) {
+              mostrarAlerta("Por favor selecciona un motivo.");
+              return false; 
+          }
+          if (motivo === "otro" && otro === "") {
+              mostrarAlerta("Por favor especifica el motivo.");
+              return false; 
+          }
+
+
+          mostrarAlerta("Su salida/entrada fue registrada correctamente");
+          return true; 
+      }
+  </script>
+  <br>
+  <br>
+  <br>
+  <br>
+       
+
+<style>
+  footer {
+    background-color: rgb(77, 193, 228);   /*fondo*/
+    color: rgb(23, 0, 85);       /*Texto*/   
+    padding: 15px 20px;      
+    text-align: center;      
+  }
+</style>
+
+
+<footer>
+  Emily Castilla &copy; 2025
+</footer>
+
+<div id="miAlerta" class="modal">
+  <div class="modal-content">
+    <span id="cerrarAlerta" class="cerrar">&times;</span>
+    <p id="textoAlerta"></p>
+  </div>
+</div>
+
+
+<script>
+function mostrarAlerta(mensaje) {
+  const modal = document.getElementById("miAlerta");
+  const texto = document.getElementById("textoAlerta");
+  texto.textContent = mensaje;
+  modal.style.display = "block";
+}
+
+document.getElementById("cerrarAlerta").onclick = function() {
+  document.getElementById("miAlerta").style.display = "none";
+}
+
+// Cerrar si se hace clic fuera del contenido modal
+window.onclick = function(event) {
+  const modal = document.getElementById("miAlerta");
+  if (event.target === modal) {
+    modal.style.display = "none";
+  }
+}
+</script>
+
+<script>
+    // ... (otras funciones y variables) ...
+
+    // URL de tu aplicación web de Google Apps Script (¡REEMPLAZA ESTO!)
+    const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzMhAzgf41n2q2KNVxvUPzyN1080ZvnOhll4uLyMyxdVrm75m8Y8xyMF86o76m7tC8v/exec'; // <--- ¡Asegúrate que sea la correcta!
+
+    document.getElementById('formSalida').addEventListener('submit', async function(event) {
+        event.preventDefault();
+  
+        if (!ultimoQR) {
+                mostrarAlerta("Por favor, escanee el código QR antes de enviar el formulario.");
+                return; // Detiene el proceso si no hay QR
+            }
+
+        const motivoSeleccionado = document.getElementById("motivoSalida").value;
+            const otroMotivoTexto = document.getElementById("otroMotivo").value.trim();
+        
+
+            let motivoFinalParaEnvio = '';
+            // Si el QR tiene una salida pendiente, el motivo se ignorará en el Apps Script.
+            // Pero el formulario sigue requiriendo un motivo para su validación de UI.
+            if (motivoSeleccionado === "otro") {
+                if (otroMotivoTexto === "") {
+                    mostrarAlerta("Por favor, especifique el motivo.");
+                    return;
+                }
+                motivoFinalParaEnvio = otroMotivoTexto;
+            } else if (motivoSeleccionado) {
+                 motivoFinalParaEnvio = motivoSeleccionado;
+            } else {
+                // Esto podría ocurrir si el usuario no selecciona nada y no activa el 'required' del select
+                // Apps Script manejará si es una entrada o salida.
+                motivoFinalParaEnvio = 'Motivo no especificado'; 
+            }
+
+
+        try {
+            const response = await fetch(WEB_APP_URL, {
+                method: 'POST',
+                mode: 'cors', // <--- ¡Importante para leer la respuesta!
+                cache: 'no-cache',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(dataToSend)
+            });
+
+            const result = await response.json(); // <--- Aquí se lee la respuesta JSON
+
+            if (result.status === "Éxito") {
+                mostrarAlerta(result.message); // Muestra el mensaje detallado de Apps Script
+            } else {
+                mostrarAlerta("Error: " + (result.message || result.error));
+                console.error("Error de Apps Script:", result);
+            }
+
+             document.getElementById('formSalida').reset();
+                document.getElementById("cajaTexto").style.display = "none"; // Oculta la caja de "otro motivo"
+                document.getElementById("otroMotivo").removeAttribute('required'); // Remover requerido
+                ultimoQR = null; // Reinicia el QR escaneado para el siguiente registro
+                document.getElementById('qr-result').innerHTML = ''; // Limpia el display del QR
+                
+          
+
+        } catch (error) {
+            console.error('Error al registrar la salida/entrada:', error);
+            mostrarAlerta('Hubo un error de conexión al registrar. Por favor, inténtelo de nuevo.');
+        }
+    });
+
+   
+</script>
+
+</body>
+</html>
+-->
+
+
